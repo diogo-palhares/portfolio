@@ -17,7 +17,7 @@ override.tf.json
 *_override.tf
 *_override.tf.json
 
-# Ambiente
+# Environment
 .env
 .env.*
 .DS_Store

@@ -154,7 +154,7 @@ main.container {
   margin: 0;
 }
 
-/* Blocos */
+/* Blocks */
 .muted {
   color: var(--muted);
 }
@@ -296,7 +296,7 @@ main.container {
   padding: 0.35rem 0;
 }
 
-/* Experiência */
+/* Experience */
 .timeline {
   list-style: none;
   padding: 0;
@@ -326,7 +326,7 @@ main.container {
   font-size: 0.92rem;
 }
 
-/* Notas */
+/* Notes */
 .post-list {
   list-style: none;
   padding: 0;
@@ -348,7 +348,7 @@ main.container {
   color: var(--muted);
 }
 
-/* Conteúdo longo (markdown) */
+/* Long-form content (markdown) */
 .prose {
   max-width: 70ch;
 }

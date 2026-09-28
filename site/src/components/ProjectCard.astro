@@ -2,17 +2,17 @@
 import type { CollectionEntry } from 'astro:content';
 
 interface Props {
-  projeto: CollectionEntry<'projetos'>;
+  project: CollectionEntry<'projects'>;
 }
 
-const { projeto } = Astro.props;
-const { titulo, resumo, stack } = projeto.data;
+const { project } = Astro.props;
+const { title, summary, stack } = project.data;
 ---
 
 <article class="card">
-  <h3><a href={`/projetos/${projeto.id}/`}>{titulo}</a></h3>
-  <p>{resumo}</p>
-  <ul class="tags" aria-label="Tecnologias">
+  <h3><a href={`/projects/${project.id}/`}>{title}</a></h3>
+  <p>{summary}</p>
+  <ul class="tags" aria-label="Technologies">
     {stack.map((t) => <li>{t}</li>)}
   </ul>
 </article>

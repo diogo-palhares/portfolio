@@ -1,6 +1,6 @@
 data "aws_caller_identity" "current" {}
 
-# A hosted zone é criada automaticamente ao registrar o domínio no Route 53
+# The hosted zone is created automatically when the domain is registered in Route 53
 data "aws_route53_zone" "site" {
   name         = var.domain_name
   private_zone = false

@@ -1,25 +1,25 @@
 variable "region" {
-  description = "Região AWS (us-east-1 é obrigatória para o certificado ACM usado pelo CloudFront)."
+  description = "AWS region (us-east-1 is required for the ACM certificate used by CloudFront)."
   type        = string
   default     = "us-east-1"
 }
 
 variable "domain_name" {
-  description = "Domínio do site; também usado para nomear recursos."
+  description = "Site domain; also used to name resources."
   type        = string
 }
 
 variable "github_owner" {
-  description = "Usuário ou organização dona do repositório no GitHub."
+  description = "GitHub user or organization that owns the repository."
   type        = string
 }
 
 variable "github_repo" {
-  description = "Nome do repositório no GitHub."
+  description = "GitHub repository name."
   type        = string
 }
 
 variable "alert_email" {
-  description = "E-mail dos alertas do AWS Budgets (vira a variável ALERT_EMAIL no GitHub; não fica no repositório)."
+  description = "Email for AWS Budgets alerts (stored as the ALERT_EMAIL GitHub variable, never committed)."
   type        = string
 }

@@ -1,16 +1,16 @@
 resource "aws_cloudfront_origin_access_control" "site" {
   name                              = "${local.name}-oac"
-  description                       = "Acesso do CloudFront ao bucket privado do site"
+  description                       = "CloudFront access to the private site bucket"
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"
 }
 
-# Redireciona www -> apex e resolve /pagina/ -> /pagina/index.html
+# Redirects www -> apex and resolves /page/ -> /page/index.html
 resource "aws_cloudfront_function" "viewer_request" {
   name    = "${local.name}-viewer-request"
   runtime = "cloudfront-js-2.0"
-  comment = "Redirect www e rewrite de index.html"
+  comment = "www redirect and index.html rewrite"
   publish = true
   code    = file("${path.module}/functions/viewer-request.js")
 }
@@ -21,7 +21,7 @@ data "aws_cloudfront_cache_policy" "optimized" {
 
 resource "aws_cloudfront_response_headers_policy" "security" {
   name    = "${local.name}-security-headers"
-  comment = "Headers de segurança do portfólio"
+  comment = "Portfolio security headers"
 
   security_headers_config {
     strict_transport_security {
@@ -59,7 +59,7 @@ resource "aws_cloudfront_distribution" "site" {
   price_class         = var.price_class
   aliases             = local.hostnames
   default_root_object = "index.html"
-  comment             = "Portfólio ${var.domain_name}"
+  comment             = "Portfolio ${var.domain_name}"
 
   origin {
     origin_id                = "s3-site"
@@ -82,7 +82,7 @@ resource "aws_cloudfront_distribution" "site" {
     }
   }
 
-  # Sem s3:ListBucket, objeto inexistente volta 403 do S3: tratamos como 404
+  # Without s3:ListBucket, S3 returns 403 for missing objects: serve them as 404
   custom_error_response {
     error_code            = 403
     response_code         = 404

@@ -1,11 +1,11 @@
 name: pipeline
 
-# Fluxo único e ordenado:
+# Single, ordered flow:
 #   changes ─┬─ infra-lint ─┬─ infra-plan   (PR)
 #            │              └─ infra-apply  (main) ─┐
 #            └─ site-build ─────────────────────────┴─ site-deploy (main)
-# O deploy só roda depois do apply (ou quando a infra não mudou), então o
-# primeiro push cria a infraestrutura e publica o site na sequência.
+# Deploy only runs after apply (or when infra did not change), so the very
+# first push creates the infrastructure and then publishes the site.
 
 on:
   pull_request:
@@ -29,7 +29,7 @@ env:
 
 jobs:
   changes:
-    name: detectar mudanças
+    name: detect changes
     runs-on: ubuntu-latest
     outputs:
       infra: ${{ steps.diff.outputs.infra }}
@@ -51,16 +51,16 @@ jobs:
             *)            BASE="" ;;
           esac
 
-          # Execução manual, primeiro push do repositório ou base desconhecida: roda tudo
+          # Manual run, first push to the repository or unknown base: run everything
           if [ -z "$BASE" ] || ! git cat-file -e "${BASE}^{commit}" 2>/dev/null; then
             echo "infra=true" >> "$GITHUB_OUTPUT"
             echo "site=true" >> "$GITHUB_OUTPUT"
-            echo "Sem base para comparar: executando infra e site."
+            echo "No base to compare against: running infra and site."
             exit 0
           fi
 
           FILES=$(git diff --name-only "$BASE" "$GITHUB_SHA")
-          echo "Arquivos alterados:"; echo "$FILES"
+          echo "Changed files:"; echo "$FILES"
 
           if echo "$FILES" | grep -qE '^(infra/main/|\.tflint\.hcl$|\.github/workflows/pipeline\.yml$)'; then
             echo "infra=true" >> "$GITHUB_OUTPUT"
@@ -116,7 +116,7 @@ jobs:
           directory: infra/main
           framework: terraform
           quiet: true
-          # Relatório informativo; ver README ("Achados aceitos do checkov")
+          # Informational report; see README ("Accepted checkov findings")
           soft_fail: true
 
   infra-plan:
@@ -152,14 +152,14 @@ jobs:
           terraform plan -no-color -lock-timeout=2m -out=tfplan
           terraform show -no-color tfplan > plan.txt
 
-      - name: Comentar plan no PR
+      - name: Comment plan on PR
         uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
             let plan = fs.readFileSync('infra/main/plan.txt', 'utf8');
             const max = 60000;
-            if (plan.length > max) plan = plan.slice(0, max) + '\n\n... (truncado, veja o log do job)';
+            if (plan.length > max) plan = plan.slice(0, max) + '\n\n... (truncated, see the job log)';
             const marker = '<!-- terraform-plan -->';
             const body = `${marker}\n### Terraform plan (infra/main)\n\`\`\`hcl\n${plan}\n\`\`\``;
             const { data: comments } = await github.rest.issues.listComments({
@@ -199,7 +199,7 @@ jobs:
       - name: terraform init
         run: terraform init -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}"
 
-      # No primeiro apply, validar o certificado e propagar o CloudFront leva de 5 a 15 min
+      # On the first apply, certificate validation and CloudFront propagation take 5-15 min
       - name: terraform apply
         run: terraform apply -auto-approve -lock-timeout=2m
 
@@ -242,7 +242,7 @@ jobs:
   site-deploy:
     name: "site: deploy"
     needs: [site-build, infra-apply]
-    # Roda se o build passou e o apply passou ou nem precisou rodar
+    # Runs when the build passed and apply either passed or was not needed
     if: >-
       !cancelled()
       && github.ref == 'refs/heads/main'
@@ -264,31 +264,31 @@ jobs:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Ler destino do SSM
+      - name: Read deploy target from SSM
         run: |
           echo "BUCKET=$(aws ssm get-parameter --name /portfolio/site-bucket --query Parameter.Value --output text)" >> "$GITHUB_ENV"
           echo "DISTRIBUTION_ID=$(aws ssm get-parameter --name /portfolio/cloudfront-distribution-id --query Parameter.Value --output text)" >> "$GITHUB_ENV"
 
-      # 1) assets com hash no nome: cache longo e imutável
-      - name: Upload de assets
+      # 1) hashed assets: long, immutable cache
+      - name: Upload assets
         run: >
           aws s3 sync dist "s3://$BUCKET"
           --exclude "*" --include "_astro/*"
           --cache-control "public,max-age=31536000,immutable"
 
-      # 2) HTML e demais arquivos: sempre revalidar
-      - name: Upload de páginas
+      # 2) HTML and everything else: always revalidate
+      - name: Upload pages
         run: >
           aws s3 sync dist "s3://$BUCKET" --delete
           --exclude "_astro/*"
           --cache-control "public,max-age=0,must-revalidate"
 
-      # 3) remove assets antigos só depois que o HTML novo já está no ar
-      - name: Limpeza de assets antigos
+      # 3) remove stale assets only after the new HTML is live
+      - name: Clean up stale assets
         run: aws s3 sync dist "s3://$BUCKET" --delete --exclude "*" --include "_astro/*"
 
-      - name: Invalidar cache do CloudFront
+      - name: Invalidate CloudFront cache
         run: aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"
 
-      - name: Resumo
-        run: echo "Publicado em https://diogopalhares.com" >> "$GITHUB_STEP_SUMMARY"
+      - name: Summary
+        run: echo "Published to https://diogopalhares.com" >> "$GITHUB_STEP_SUMMARY"

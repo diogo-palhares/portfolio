@@ -1,21 +1,21 @@
 variable "domain_name" {
-  description = "Domínio apex do site (registrado no Route 53)."
+  description = "Apex domain of the site (registered in Route 53)."
   type        = string
 }
 
 variable "alert_email" {
-  description = "E-mail que recebe os alertas do AWS Budgets."
+  description = "Email that receives AWS Budgets alerts."
   type        = string
 }
 
 variable "monthly_budget_usd" {
-  description = "Limite mensal de custo da conta, em USD, para disparar alertas."
+  description = "Monthly account cost limit, in USD, that triggers alerts."
   type        = number
   default     = 5
 }
 
 variable "price_class" {
-  description = "Price class do CloudFront. PriceClass_All inclui edges na América do Sul."
+  description = "CloudFront price class. PriceClass_All includes South American edge locations."
   type        = string
   default     = "PriceClass_All"
 }

@@ -1,5 +1,5 @@
-# Parâmetros lidos pelo job de deploy: o pipeline não depende de variáveis
-# preenchidas à mão depois do apply.
+# Parameters read by the deploy job, so the pipeline never depends on values
+# copied by hand after an apply.
 resource "aws_ssm_parameter" "site_bucket" {
   name  = "/portfolio/site-bucket"
   type  = "String"

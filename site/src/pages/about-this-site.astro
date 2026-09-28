@@ -1,0 +1,73 @@
+---
+import Base from '../layouts/Base.astro';
+import { profile } from '../data/profile';
+---
+
+<Base
+  title="About this site"
+  description="Architecture, pipeline and costs of this site: S3, CloudFront, Terraform and GitHub Actions."
+>
+  <article class="prose">
+    <h1>About this site</h1>
+    <p class="lead">
+      [FILL: 1-2 sentences saying the site is also an infrastructure project, provisioned and shipped with the same
+      practices used at work.]
+    </p>
+
+    <h2>Architecture</h2>
+    <pre class="diagram" aria-label="Architecture diagram">
+Visitor ──HTTPS──▶ Route 53 ──▶ CloudFront (CDN + TLS/ACM)
+                                    │  OAC (private access)
+                                    ▼
+                              S3 (private bucket)
+
+GitHub ──push──▶ GitHub Actions ──OIDC──▶ AWS
+                  ├─ lint + scan → plan (PR) / apply (main)
+                  └─ Astro build → s3 sync → invalidation
+                     (deploy only after apply)</pre>
+    <p>
+      [FILL: one paragraph walking through a request. Facts to cover: static site built with Astro; Route 53 alias
+      records (apex + www) pointing to CloudFront; ACM certificate validated via DNS; private S3 bucket reachable only
+      through Origin Access Control; a CloudFront Function that redirects www → apex and rewrites /page/ to
+      /page/index.html; security headers (HSTS, CSP, X-Frame-Options, Referrer-Policy) via a response headers
+      policy; HTTP/2 and HTTP/3, TLS 1.2+.]
+    </p>
+
+    <h2>Infrastructure as code</h2>
+    <p>
+      [FILL: explain the two Terraform stacks. "bootstrap" is the only manual step and runs once: remote-state S3
+      bucket (versioned, encrypted, native S3 locking), GitHub OIDC provider, least-privilege IAM roles and the
+      GitHub repository variables themselves (via the github provider). The role trust policies are pinned to the
+      repository's immutable OIDC subject (owner and repo numeric IDs). "main" creates the S3 bucket, CloudFront,
+      ACM, DNS records, an AWS Budget alert and SSM parameters consumed by the pipeline.]
+    </p>
+
+    <h2>Pipeline</h2>
+    <p>
+      [FILL: describe the single pipeline (pipeline.yml). It detects whether a change touches infra, site or both;
+      runs terraform fmt, validate, tflint and checkov; on pull requests it posts the terraform plan as a comment;
+      on main it applies and only then deploys (Astro build, sync with long immutable cache for hashed assets and
+      no-cache for HTML, CloudFront invalidation). The deploy job reads the bucket and distribution ID from SSM
+      Parameter Store, so even the first deploy is fully automated. Highlight OIDC with no access keys stored in
+      GitHub and separate least-privilege roles (the deploy role can only write to the bucket and invalidate the
+      cache).]
+    </p>
+
+    <h2>Costs</h2>
+    <p>
+      [FILL: real monthly/yearly cost. Estimate: .com domain ~US$15/year, Route 53 hosted zone US$0.50/month,
+      S3 + CloudFront + ACM ≈ US$0 at portfolio traffic. Mention the AWS Budget alert at US$5/month. Ask the owner
+      for the actual figure from Cost Explorer before publishing; if unknown, present it as an estimate.]
+    </p>
+
+    <h2>Decisions and next steps</h2>
+    <p>
+      [FILL: optional. Why a static site instead of a server, why Astro, and possible next steps (e.g. Lighthouse
+      checks in CI, WAF, access logs).]
+    </p>
+
+    <p>
+      <a href={`${profile.links.github}/portfolio`} rel="noopener" target="_blank">View the source on GitHub →</a>
+    </p>
+  </article>
+</Base>

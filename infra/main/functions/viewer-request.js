@@ -3,7 +3,7 @@ function handler(event) {
   var request = event.request;
   var host = request.headers.host ? request.headers.host.value : '';
 
-  // www.dominio.com -> dominio.com (URL canônica única)
+  // www.domain.com -> domain.com (single canonical URL)
   if (host.startsWith('www.')) {
     return {
       statusCode: 301,
@@ -14,7 +14,7 @@ function handler(event) {
     };
   }
 
-  // Astro gera /pagina/index.html; o S3 via OAC não resolve índices sozinho
+  // Astro emits /page/index.html; S3 behind OAC does not resolve index documents
   var uri = request.uri;
   if (uri.endsWith('/')) {
     request.uri = uri + 'index.html';

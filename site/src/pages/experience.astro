@@ -1,34 +1,34 @@
 ---
 import Base from '../layouts/Base.astro';
-import { perfil, experiencias, competencias, formacao, certificacoes } from '../data/perfil';
+import { profile, experiences, skills, education, certifications } from '../data/profile';
 ---
 
-<Base title="Experiência" description={`Experiência profissional de ${perfil.nome}.`}>
+<Base title="Experience" description={`Professional experience of ${profile.name}.`}>
   <header class="page-head">
-    <h1>Experiência</h1>
-    <a class="button primary" href={perfil.cv} download>Baixar currículo (PDF)</a>
+    <h1>Experience</h1>
+    <a class="button primary" href={profile.cv} download>Download resume (PDF)</a>
   </header>
 
   <section>
     <ol class="timeline">
       {
-        experiencias.map((exp) => (
+        experiences.map((exp) => (
           <li>
             <div class="timeline-head">
               <h2>
-                {exp.cargo} <span class="muted">· {exp.empresa}</span>
+                {exp.role} <span class="muted">· {exp.company}</span>
               </h2>
               <p class="muted">
-                {exp.periodo} · {exp.local}
+                {exp.period} · {exp.location}
               </p>
             </div>
-            <p>{exp.descricao}</p>
+            <p>{exp.description}</p>
             <ul>
-              {exp.destaques.map((d) => (
-                <li>{d}</li>
+              {exp.highlights.map((h) => (
+                <li>{h}</li>
               ))}
             </ul>
-            <ul class="tags" aria-label="Tecnologias">
+            <ul class="tags" aria-label="Technologies">
               {exp.stack.map((t) => (
                 <li>{t}</li>
               ))}
@@ -40,14 +40,14 @@ import { perfil, experiencias, competencias, formacao, certificacoes } from '../
   </section>
 
   <section>
-    <h2>Competências</h2>
+    <h2>Skills</h2>
     <div class="grid">
       {
-        competencias.map((g) => (
+        skills.map((g) => (
           <div class="card">
-            <h3>{g.grupo}</h3>
+            <h3>{g.group}</h3>
             <ul class="tags">
-              {g.itens.map((i) => (
+              {g.items.map((i) => (
                 <li>{i}</li>
               ))}
             </ul>
@@ -58,12 +58,12 @@ import { perfil, experiencias, competencias, formacao, certificacoes } from '../
   </section>
 
   <section>
-    <h2>Formação</h2>
+    <h2>Education</h2>
     <ul class="plain">
       {
-        formacao.map((f) => (
+        education.map((e) => (
           <li>
-            <strong>{f.curso}</strong> · {f.instituicao} <span class="muted">({f.periodo})</span>
+            <strong>{e.degree}</strong> · {e.institution} <span class="muted">({e.period})</span>
           </li>
         ))
       }
@@ -71,21 +71,21 @@ import { perfil, experiencias, competencias, formacao, certificacoes } from '../
   </section>
 
   {
-    certificacoes.length > 0 && (
+    certifications.length > 0 && (
       <section>
-        <h2>Certificações</h2>
+        <h2>Certifications</h2>
         <ul class="plain">
-          {certificacoes.map((c) => (
+          {certifications.map((c) => (
             <li>
               {c.url ? (
                 <a href={c.url} rel="noopener" target="_blank">
-                  {c.nome}
+                  {c.name}
                 </a>
               ) : (
-                c.nome
+                c.name
               )}{' '}
               <span class="muted">
-                · {c.emissor} · {c.ano}
+                · {c.issuer} · {c.year}
               </span>
             </li>
           ))}

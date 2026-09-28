@@ -1,28 +1,28 @@
 ---
 import { getCollection } from 'astro:content';
-import { perfil } from '../data/perfil';
+import { profile } from '../data/profile';
 
-const notas = await getCollection('notas', ({ data }) => !data.rascunho);
+const notes = await getCollection('notes', ({ data }) => !data.draft);
 
-const itens = [
-  { href: '/experiencia/', label: 'Experiência' },
-  { href: '/projetos/', label: 'Projetos' },
-  ...(notas.length > 0 ? [{ href: '/notas/', label: 'Notas' }] : []),
-  { href: '/sobre-este-site/', label: 'Sobre este site' },
+const items = [
+  { href: '/experience/', label: 'Experience' },
+  { href: '/projects/', label: 'Projects' },
+  ...(notes.length > 0 ? [{ href: '/notes/', label: 'Notes' }] : []),
+  { href: '/about-this-site/', label: 'About this site' },
 ];
 
-const atual = Astro.url.pathname;
+const current = Astro.url.pathname;
 ---
 
 <header class="site-header">
   <div class="container header-inner">
-    <a href="/" class="brand">{perfil.nome}</a>
-    <nav aria-label="Principal">
+    <a href="/" class="brand">{profile.name}</a>
+    <nav aria-label="Main">
       <ul>
         {
-          itens.map((item) => (
+          items.map((item) => (
             <li>
-              <a href={item.href} aria-current={atual.startsWith(item.href) ? 'page' : undefined}>
+              <a href={item.href} aria-current={current.startsWith(item.href) ? 'page' : undefined}>
                 {item.label}
               </a>
             </li>

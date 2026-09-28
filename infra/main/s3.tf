@@ -1,4 +1,4 @@
-# Bucket privado: só o CloudFront (via OAC) consegue ler os objetos
+# Private bucket: only CloudFront (via OAC) can read the objects
 resource "aws_s3_bucket" "site" {
   bucket = local.site_bucket
 }

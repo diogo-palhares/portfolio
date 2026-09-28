@@ -1,4 +1,4 @@
-# Rede de segurança da conta inteira (sem filtro por serviço)
+# Account-wide safety net (no per-service filter)
 resource "aws_budgets_budget" "monthly" {
   name         = "${local.name}-monthly"
   budget_type  = "COST"

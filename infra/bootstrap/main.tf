@@ -1,11 +1,11 @@
-# Bootstrap: recursos que precisam existir ANTES do pipeline.
-# Roda uma única vez, localmente, com credenciais de administrador.
-#   - Bucket S3 do state remoto do Terraform (lock nativo via use_lockfile)
-#   - Provedor OIDC do GitHub Actions
-#   - Role "infra" (terraform plan/apply) e role "deploy" (s3 sync + invalidação)
-#   - Variáveis do repositório no GitHub usadas pelo pipeline
+# Bootstrap: resources that must exist BEFORE the pipeline can run.
+# Applied once, locally, with administrator credentials.
+#   - S3 bucket for the Terraform remote state (native locking via use_lockfile)
+#   - GitHub Actions OIDC provider
+#   - "infra" role (terraform plan/apply) and "deploy" role (s3 sync + invalidation)
+#   - GitHub repository variables consumed by the pipeline
 #
-# Autenticação no GitHub: usa o token do `gh auth login` (ou GITHUB_TOKEN).
+# GitHub auth: uses the token from `gh auth login` (export it as GITHUB_TOKEN).
 
 terraform {
   required_version = ">= 1.10"
@@ -21,10 +21,10 @@ terraform {
     }
   }
 
-  # Depois do primeiro apply, é possível migrar este state para o próprio bucket:
-  # descomente o bloco abaixo e rode `terraform init -migrate-state`.
+  # After the first apply, this state can be migrated into the bucket itself:
+  # uncomment the block below and run `terraform init -migrate-state`.
   # backend "s3" {
-  #   bucket       = "<saida state_bucket>"
+  #   bucket       = "<state_bucket output>"
   #   key          = "portfolio/bootstrap.tfstate"
   #   region       = "us-east-1"
   #   encrypt      = true
@@ -50,9 +50,9 @@ provider "github" {
 
 data "aws_caller_identity" "current" {}
 
-# IDs numéricos do dono e do repositório: o GitHub emite o "sub" do token OIDC
-# no formato imutável repo:<dono>@<id>/<repo>@<id>:..., que não pode ser
-# reaproveitado por outro repositório criado com o mesmo nome.
+# Numeric owner and repository IDs: GitHub issues the OIDC token "sub" in the
+# immutable format repo:<owner>@<id>/<repo>@<id>:..., which cannot be reused by
+# another repository created later with the same name.
 data "github_user" "owner" {
   username = var.github_owner
 }
@@ -66,13 +66,13 @@ locals {
   name         = replace(var.domain_name, ".", "-")
   repo         = "${var.github_owner}@${data.github_user.owner.id}/${var.github_repo}@${data.github_repository.this.repo_id}"
   state_bucket = "${local.name}-tfstate-${local.account_id}"
-  # Mesmos padrões usados em infra/main
+  # Same naming patterns used in infra/main
   site_bucket = "${local.name}-site-${local.account_id}"
   ssm_prefix  = "arn:aws:ssm:${var.region}:${local.account_id}:parameter/portfolio"
 }
 
 # ---------------------------------------------------------------------------
-# State remoto
+# Remote state
 # ---------------------------------------------------------------------------
 resource "aws_s3_bucket" "tfstate" {
   bucket = local.state_bucket
@@ -128,7 +128,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "tfstate" {
 }
 
 # ---------------------------------------------------------------------------
-# OIDC GitHub Actions -> AWS (sem access keys guardadas no GitHub)
+# OIDC GitHub Actions -> AWS (no access keys stored in GitHub)
 # ---------------------------------------------------------------------------
 resource "aws_iam_openid_connect_provider" "github" {
   url            = "https://token.actions.githubusercontent.com"
@@ -150,7 +150,7 @@ data "aws_iam_policy_document" "infra_trust" {
       values   = ["sts.amazonaws.com"]
     }
 
-    # PRs rodam plan; a branch main roda apply
+    # PRs run plan; the main branch runs apply
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
@@ -177,7 +177,7 @@ data "aws_iam_policy_document" "deploy_trust" {
       values   = ["sts.amazonaws.com"]
     }
 
-    # Só a main publica o site
+    # Only main publishes the site
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
@@ -187,7 +187,7 @@ data "aws_iam_policy_document" "deploy_trust" {
 }
 
 # ---------------------------------------------------------------------------
-# Role infra: gerencia S3 do site, CloudFront, ACM, Route 53 e Budgets
+# Infra role: manages the site bucket, CloudFront, ACM, Route 53 and Budgets
 # ---------------------------------------------------------------------------
 resource "aws_iam_role" "infra" {
   name                 = "${local.name}-github-infra"
@@ -248,7 +248,7 @@ resource "aws_iam_role_policy" "infra" {
 }
 
 # ---------------------------------------------------------------------------
-# Role deploy: apenas sincroniza arquivos e invalida o cache
+# Deploy role: only syncs files and invalidates the cache
 # ---------------------------------------------------------------------------
 resource "aws_iam_role" "deploy" {
   name                 = "${local.name}-github-deploy"
@@ -289,7 +289,7 @@ resource "aws_iam_role_policy" "deploy" {
 }
 
 # ---------------------------------------------------------------------------
-# Variáveis do repositório consumidas por .github/workflows/pipeline.yml
+# Repository variables consumed by .github/workflows/pipeline.yml
 # ---------------------------------------------------------------------------
 locals {
   github_variables = {

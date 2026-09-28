@@ -2,38 +2,38 @@
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import ProjectCard from '../components/ProjectCard.astro';
-import { perfil } from '../data/perfil';
+import { profile } from '../data/profile';
 
-const destaques = (await getCollection('projetos', ({ data }) => !data.rascunho && data.destaque))
-  .sort((a, b) => a.data.ordem - b.data.ordem)
+const featured = (await getCollection('projects', ({ data }) => !data.draft && data.featured))
+  .sort((a, b) => a.data.order - b.data.order)
   .slice(0, 3);
 ---
 
 <Base>
   <section class="hero">
-    {perfil.disponibilidade && <p class="badge">{perfil.disponibilidade}</p>}
-    <h1>{perfil.nome}</h1>
-    <p class="role">{perfil.cargo}</p>
-    <p class="muted">{perfil.localizacao}</p>
-    <p class="lead">{perfil.resumo}</p>
+    {profile.availability && <p class="badge">{profile.availability}</p>}
+    <h1>{profile.name}</h1>
+    <p class="role">{profile.title}</p>
+    <p class="muted">{profile.location}</p>
+    <p class="lead">{profile.summary}</p>
     <div class="actions">
-      <a class="button primary" href={perfil.cv} download>Baixar currículo (PDF)</a>
-      <a class="button" href={perfil.links.linkedin} rel="me noopener" target="_blank">LinkedIn</a>
-      <a class="button" href={perfil.links.github} rel="me noopener" target="_blank">GitHub</a>
-      <a class="button" href={`mailto:${perfil.links.email}`}>E-mail</a>
+      <a class="button primary" href={profile.cv} download>Download resume (PDF)</a>
+      <a class="button" href={profile.links.linkedin} rel="me noopener" target="_blank">LinkedIn</a>
+      <a class="button" href={profile.links.github} rel="me noopener" target="_blank">GitHub</a>
+      <a class="button" href={`mailto:${profile.links.email}`}>Email</a>
     </div>
   </section>
 
   {
-    destaques.length > 0 && (
+    featured.length > 0 && (
       <section>
         <div class="section-head">
-          <h2>Projetos em destaque</h2>
-          <a href="/projetos/">Ver todos →</a>
+          <h2>Featured projects</h2>
+          <a href="/projects/">See all →</a>
         </div>
         <div class="grid">
-          {destaques.map((projeto) => (
-            <ProjectCard projeto={projeto} />
+          {featured.map((project) => (
+            <ProjectCard project={project} />
           ))}
         </div>
       </section>
@@ -41,11 +41,11 @@ const destaques = (await getCollection('projetos', ({ data }) => !data.rascunho 
   }
 
   <section class="callout">
-    <h2>Como este site funciona</h2>
+    <h2>How this site works</h2>
     <p>
-      [PREENCHER: 1 a 2 frases convidando a ver a infraestrutura do site, ex.: "Este site é servido por S3 +
-      CloudFront, provisionado com Terraform e publicado via GitHub Actions com OIDC."]
+      [FILL: 1-2 sentences inviting the reader to see the site's infrastructure, e.g. "This site is served by S3 +
+      CloudFront, provisioned with Terraform and shipped by GitHub Actions over OIDC."]
     </p>
-    <a href="/sobre-este-site/">Ver a arquitetura →</a>
+    <a href="/about-this-site/">See the architecture →</a>
   </section>
 </Base>

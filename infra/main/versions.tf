@@ -8,8 +8,8 @@ terraform {
     }
   }
 
-  # O bucket é informado no init:
-  #   terraform init -backend-config="bucket=<saida state_bucket do bootstrap>"
+  # The bucket is passed at init time:
+  #   terraform init -backend-config="bucket=<bootstrap state_bucket output>"
   backend "s3" {
     key          = "portfolio/main.tfstate"
     region       = "us-east-1"
@@ -19,7 +19,7 @@ terraform {
 }
 
 provider "aws" {
-  # CloudFront só aceita certificados ACM emitidos em us-east-1
+  # CloudFront only accepts ACM certificates issued in us-east-1
   region = "us-east-1"
 
   default_tags {
