@@ -104,11 +104,4 @@ export const education: Education[] = [
 ];
 
 // Use [] to hide the section
-export const certifications: Certification[] = [
-  {
-    name: 'AWS Certified Cloud Practitioner',
-    issuer: 'Amazon Web Services',
-    year: '[FILL: year obtained]',
-    url: '[FILL: Credly verification link or remove this property]',
-  },
-];
+export const certifications: Certification[] = [];
