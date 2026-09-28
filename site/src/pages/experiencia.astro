@@ -1,0 +1,96 @@
+---
+import Base from '../layouts/Base.astro';
+import { perfil, experiencias, competencias, formacao, certificacoes } from '../data/perfil';
+---
+
+<Base title="Experiência" description={`Experiência profissional de ${perfil.nome}.`}>
+  <header class="page-head">
+    <h1>Experiência</h1>
+    <a class="button primary" href={perfil.cv} download>Baixar currículo (PDF)</a>
+  </header>
+
+  <section>
+    <ol class="timeline">
+      {
+        experiencias.map((exp) => (
+          <li>
+            <div class="timeline-head">
+              <h2>
+                {exp.cargo} <span class="muted">· {exp.empresa}</span>
+              </h2>
+              <p class="muted">
+                {exp.periodo} · {exp.local}
+              </p>
+            </div>
+            <p>{exp.descricao}</p>
+            <ul>
+              {exp.destaques.map((d) => (
+                <li>{d}</li>
+              ))}
+            </ul>
+            <ul class="tags" aria-label="Tecnologias">
+              {exp.stack.map((t) => (
+                <li>{t}</li>
+              ))}
+            </ul>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <section>
+    <h2>Competências</h2>
+    <div class="grid">
+      {
+        competencias.map((g) => (
+          <div class="card">
+            <h3>{g.grupo}</h3>
+            <ul class="tags">
+              {g.itens.map((i) => (
+                <li>{i}</li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section>
+    <h2>Formação</h2>
+    <ul class="plain">
+      {
+        formacao.map((f) => (
+          <li>
+            <strong>{f.curso}</strong> · {f.instituicao} <span class="muted">({f.periodo})</span>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  {
+    certificacoes.length > 0 && (
+      <section>
+        <h2>Certificações</h2>
+        <ul class="plain">
+          {certificacoes.map((c) => (
+            <li>
+              {c.url ? (
+                <a href={c.url} rel="noopener" target="_blank">
+                  {c.nome}
+                </a>
+              ) : (
+                c.nome
+              )}{' '}
+              <span class="muted">
+                · {c.emissor} · {c.ano}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</Base>

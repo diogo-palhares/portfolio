@@ -1,0 +1,15 @@
+---
+import { perfil } from '../data/perfil';
+const ano = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <p>© {ano} {perfil.nome}</p>
+    <ul class="link-row">
+      <li><a href={perfil.links.linkedin} rel="me noopener" target="_blank">LinkedIn</a></li>
+      <li><a href={perfil.links.github} rel="me noopener" target="_blank">GitHub</a></li>
+      <li><a href={`mailto:${perfil.links.email}`}>E-mail</a></li>
+    </ul>
+  </div>
+</footer>

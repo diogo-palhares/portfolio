@@ -1,0 +1,294 @@
+name: pipeline
+
+# Fluxo único e ordenado:
+#   changes ─┬─ infra-lint ─┬─ infra-plan   (PR)
+#            │              └─ infra-apply  (main) ─┐
+#            └─ site-build ─────────────────────────┴─ site-deploy (main)
+# O deploy só roda depois do apply (ou quando a infra não mudou), então o
+# primeiro push cria a infraestrutura e publica o site na sequência.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pipeline-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  TF_VERSION: "1.16.4"
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+  TF_VAR_alert_email: ${{ vars.ALERT_EMAIL }}
+  AWS_REGION: us-east-1
+
+jobs:
+  changes:
+    name: detectar mudanças
+    runs-on: ubuntu-latest
+    outputs:
+      infra: ${{ steps.diff.outputs.infra }}
+      site: ${{ steps.diff.outputs.site }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - id: diff
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          case "$EVENT" in
+            pull_request) BASE="$PR_BASE" ;;
+            push)         BASE="$PUSH_BEFORE" ;;
+            *)            BASE="" ;;
+          esac
+
+          # Execução manual, primeiro push do repositório ou base desconhecida: roda tudo
+          if [ -z "$BASE" ] || ! git cat-file -e "${BASE}^{commit}" 2>/dev/null; then
+            echo "infra=true" >> "$GITHUB_OUTPUT"
+            echo "site=true" >> "$GITHUB_OUTPUT"
+            echo "Sem base para comparar: executando infra e site."
+            exit 0
+          fi
+
+          FILES=$(git diff --name-only "$BASE" "$GITHUB_SHA")
+          echo "Arquivos alterados:"; echo "$FILES"
+
+          if echo "$FILES" | grep -qE '^(infra/main/|\.tflint\.hcl$|\.github/workflows/pipeline\.yml$)'; then
+            echo "infra=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "infra=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if echo "$FILES" | grep -qE '^(site/|\.github/workflows/pipeline\.yml$)'; then
+            echo "site=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "site=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ---------------------------------------------------------------------------
+  # Infra
+  # ---------------------------------------------------------------------------
+  infra-lint:
+    name: "infra: fmt / validate / tflint / checkov"
+    needs: changes
+    if: needs.changes.outputs.infra == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/main
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: terraform fmt
+        run: terraform fmt -check -recursive -diff
+
+      - name: terraform validate
+        run: |
+          terraform init -backend=false
+          terraform validate
+
+      - uses: terraform-linters/setup-tflint@v6
+
+      - name: tflint
+        run: |
+          tflint --init --config "$GITHUB_WORKSPACE/.tflint.hcl"
+          tflint --config "$GITHUB_WORKSPACE/.tflint.hcl" --format compact
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: infra/main
+          framework: terraform
+          quiet: true
+          # Relatório informativo; ver README ("Achados aceitos do checkov")
+          soft_fail: true
+
+  infra-plan:
+    name: "infra: plan"
+    needs: infra-lint
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    defaults:
+      run:
+        working-directory: infra/main
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_INFRA_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: terraform init
+        run: terraform init -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}"
+
+      - name: terraform plan
+        run: |
+          terraform plan -no-color -lock-timeout=2m -out=tfplan
+          terraform show -no-color tfplan > plan.txt
+
+      - name: Comentar plan no PR
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const fs = require('fs');
+            let plan = fs.readFileSync('infra/main/plan.txt', 'utf8');
+            const max = 60000;
+            if (plan.length > max) plan = plan.slice(0, max) + '\n\n... (truncado, veja o log do job)';
+            const marker = '<!-- terraform-plan -->';
+            const body = `${marker}\n### Terraform plan (infra/main)\n\`\`\`hcl\n${plan}\n\`\`\``;
+            const { data: comments } = await github.rest.issues.listComments({
+              ...context.repo, issue_number: context.issue.number,
+            });
+            const previous = comments.find(c => c.body.includes(marker));
+            if (previous) {
+              await github.rest.issues.updateComment({ ...context.repo, comment_id: previous.id, body });
+            } else {
+              await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number, body });
+            }
+
+  infra-apply:
+    name: "infra: apply"
+    needs: infra-lint
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        working-directory: infra/main
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_INFRA_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: terraform init
+        run: terraform init -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}"
+
+      # No primeiro apply, validar o certificado e propagar o CloudFront leva de 5 a 15 min
+      - name: terraform apply
+        run: terraform apply -auto-approve -lock-timeout=2m
+
+      - name: Outputs
+        run: |
+          echo '### Terraform outputs' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          terraform output >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------
+  # Site
+  # ---------------------------------------------------------------------------
+  site-build:
+    name: "site: build"
+    needs: changes
+    if: needs.changes.outputs.site == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: site/.nvmrc
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - run: npm ci
+      - run: npm run build
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: site-dist
+          path: site/dist
+          retention-days: 7
+
+  site-deploy:
+    name: "site: deploy"
+    needs: [site-build, infra-apply]
+    # Roda se o build passou e o apply passou ou nem precisou rodar
+    if: >-
+      !cancelled()
+      && github.ref == 'refs/heads/main'
+      && github.event_name != 'pull_request'
+      && needs.site-build.result == 'success'
+      && (needs.infra-apply.result == 'success' || needs.infra-apply.result == 'skipped')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: site-dist
+          path: dist
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Ler destino do SSM
+        run: |
+          echo "BUCKET=$(aws ssm get-parameter --name /portfolio/site-bucket --query Parameter.Value --output text)" >> "$GITHUB_ENV"
+          echo "DISTRIBUTION_ID=$(aws ssm get-parameter --name /portfolio/cloudfront-distribution-id --query Parameter.Value --output text)" >> "$GITHUB_ENV"
+
+      # 1) assets com hash no nome: cache longo e imutável
+      - name: Upload de assets
+        run: >
+          aws s3 sync dist "s3://$BUCKET"
+          --exclude "*" --include "_astro/*"
+          --cache-control "public,max-age=31536000,immutable"
+
+      # 2) HTML e demais arquivos: sempre revalidar
+      - name: Upload de páginas
+        run: >
+          aws s3 sync dist "s3://$BUCKET" --delete
+          --exclude "_astro/*"
+          --cache-control "public,max-age=0,must-revalidate"
+
+      # 3) remove assets antigos só depois que o HTML novo já está no ar
+      - name: Limpeza de assets antigos
+        run: aws s3 sync dist "s3://$BUCKET" --delete --exclude "*" --include "_astro/*"
+
+      - name: Invalidar cache do CloudFront
+        run: aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"
+
+      - name: Resumo
+        run: echo "Publicado em https://diogopalhares.com" >> "$GITHUB_STEP_SUMMARY"

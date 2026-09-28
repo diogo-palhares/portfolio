@@ -1,0 +1,69 @@
+---
+import Base from '../layouts/Base.astro';
+import { perfil } from '../data/perfil';
+---
+
+<Base
+  title="Sobre este site"
+  description="Arquitetura, pipeline e custos deste site: S3, CloudFront, Terraform e GitHub Actions."
+>
+  <article class="prose">
+    <h1>Sobre este site</h1>
+    <p class="lead">
+      [PREENCHER: 1 a 2 frases dizendo que o site é também um projeto de infraestrutura, provisionado e publicado
+      com as mesmas práticas usadas no dia a dia.]
+    </p>
+
+    <h2>Arquitetura</h2>
+    <pre class="diagram" aria-label="Diagrama da arquitetura">
+Visitante ──HTTPS──▶ Route 53 ──▶ CloudFront (CDN + TLS/ACM)
+                                      │  OAC (acesso privado)
+                                      ▼
+                                S3 (bucket privado)
+
+GitHub ──push──▶ GitHub Actions ──OIDC──▶ AWS
+                  ├─ lint + scan → plan (PR) / apply (main)
+                  └─ build Astro → s3 sync → invalidação
+                     (deploy só depois do apply)</pre>
+    <p>
+      [PREENCHER: explicar em 1 parágrafo o caminho da requisição. Pontos a cobrir: Route 53 com alias para o
+      CloudFront; certificado ACM validado por DNS; bucket S3 privado acessado só via Origin Access Control;
+      CloudFront Function que redireciona www → apex e resolve index.html; headers de segurança (HSTS, CSP,
+      X-Frame-Options) via response headers policy.]
+    </p>
+
+    <h2>Infraestrutura como código</h2>
+    <p>
+      [PREENCHER: explicar a separação em duas stacks Terraform. "bootstrap" é o único passo manual e roda uma
+      vez: bucket de state com lock nativo do S3, provedor OIDC, roles IAM e as próprias variáveis do
+      repositório no GitHub, via provider github. "main" cria S3, CloudFront, ACM, DNS, Budget e parâmetros
+      SSM. Citar state remoto versionado e criptografado.]
+    </p>
+
+    <h2>Pipeline</h2>
+    <p>
+      [PREENCHER: descrever o pipeline único (pipeline.yml). Ele detecta se a mudança é de infra, de site ou
+      das duas; roda fmt, validate, tflint e checkov; no PR, faz plan comentado; na main, faz apply e só
+      depois o deploy (build do Astro, sync com cache-control diferente para assets e HTML, invalidação do
+      CloudFront). O deploy descobre o bucket e a distribuição pelo SSM Parameter Store, então até o
+      primeiro deploy é 100% automático. Destacar OIDC sem access keys no GitHub e roles com menor
+      privilégio.]
+    </p>
+
+    <h2>Custos</h2>
+    <p>
+      [PREENCHER: custo real mensal/anual (domínio, hosted zone, S3/CloudFront) e o alerta do AWS Budgets.
+      Atualizar com o valor observado no Cost Explorer depois de 1 ou 2 meses.]
+    </p>
+
+    <h2>Decisões e próximos passos</h2>
+    <p>
+      [PREENCHER: opcional. Por que site estático em vez de servidor, por que Astro, o que poderia evoluir
+      (ex.: testes de Lighthouse no CI, WAF, logs de acesso).]
+    </p>
+
+    <p>
+      <a href={`${perfil.links.github}/portfolio`} rel="noopener" target="_blank">Ver o código no GitHub →</a>
+    </p>
+  </article>
+</Base>

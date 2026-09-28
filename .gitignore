@@ -1,0 +1,24 @@
+# Node / Astro
+node_modules/
+site/dist/
+site/.astro/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+plan.txt
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ambiente
+.env
+.env.*
+.DS_Store
+Thumbs.db

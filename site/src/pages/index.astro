@@ -1,0 +1,51 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import { perfil } from '../data/perfil';
+
+const destaques = (await getCollection('projetos', ({ data }) => !data.rascunho && data.destaque))
+  .sort((a, b) => a.data.ordem - b.data.ordem)
+  .slice(0, 3);
+---
+
+<Base>
+  <section class="hero">
+    {perfil.disponibilidade && <p class="badge">{perfil.disponibilidade}</p>}
+    <h1>{perfil.nome}</h1>
+    <p class="role">{perfil.cargo}</p>
+    <p class="muted">{perfil.localizacao}</p>
+    <p class="lead">{perfil.resumo}</p>
+    <div class="actions">
+      <a class="button primary" href={perfil.cv} download>Baixar currículo (PDF)</a>
+      <a class="button" href={perfil.links.linkedin} rel="me noopener" target="_blank">LinkedIn</a>
+      <a class="button" href={perfil.links.github} rel="me noopener" target="_blank">GitHub</a>
+      <a class="button" href={`mailto:${perfil.links.email}`}>E-mail</a>
+    </div>
+  </section>
+
+  {
+    destaques.length > 0 && (
+      <section>
+        <div class="section-head">
+          <h2>Projetos em destaque</h2>
+          <a href="/projetos/">Ver todos →</a>
+        </div>
+        <div class="grid">
+          {destaques.map((projeto) => (
+            <ProjectCard projeto={projeto} />
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  <section class="callout">
+    <h2>Como este site funciona</h2>
+    <p>
+      [PREENCHER: 1 a 2 frases convidando a ver a infraestrutura do site, ex.: "Este site é servido por S3 +
+      CloudFront, provisionado com Terraform e publicado via GitHub Actions com OIDC."]
+    </p>
+    <a href="/sobre-este-site/">Ver a arquitetura →</a>
+  </section>
+</Base>
