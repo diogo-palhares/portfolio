@@ -30,17 +30,16 @@ export interface SkillGroup {
 }
 
 export const profile = {
-  name: '[FILL: full name exactly as it should appear on the site; must match LinkedIn]',
-  title: '[FILL: short professional title, e.g. "DevOps Engineer"; must match the LinkedIn headline role]',
-  location: '[FILL: city, country and work model, e.g. "City, Brazil · Remote"]',
+  name: 'Diogo Palhares',
+  title: 'DevOps Engineer',
+  location: 'Belo Horizonte, Brazil',
   summary:
-    '[FILL: 2-3 sentence introduction: what you do, what kind of environments you work in and what you deliver. Also used as the site meta description, so aim for ~160 characters or fewer.]',
-  availability:
-    '[FILL: short status line, e.g. "Open to DevOps/SRE opportunities". Use "" to hide the badge.]',
+    'DevOps Engineer building and running AWS infrastructure with Terraform, Kubernetes (EKS) and CI/CD. I automate deployments, observability and security.',
+  availability: 'Open to DevOps/SRE opportunities',
   links: {
-    linkedin: 'https://www.linkedin.com/in/FILL',
-    github: 'https://github.com/FILL',
-    email: 'FILL@example.com',
+    linkedin: 'https://www.linkedin.com/in/diogo-palhares',
+    github: 'https://github.com/diogo-palhares',
+    email: 'diogocampos3210@gmail.com',
   },
   // Put the PDF at site/public/resume.pdf
   cv: '/resume.pdf',
@@ -49,51 +48,67 @@ export const profile = {
 // Most recent first. Add or remove entries as needed.
 export const experiences: Experience[] = [
   {
-    company: '[FILL: company name]',
-    role: '[FILL: job title]',
-    period: '[FILL: e.g. "Jan 2024 – Present"]',
-    location: '[FILL: city or "Remote"]',
-    description: '[FILL: one sentence of context about the company/team and your role in it]',
+    company: 'CI&T',
+    role: 'DevOps Engineer',
+    period: 'Mar 2025 – Present',
+    location: 'Belo Horizonte, Brazil',
+    description:
+      'I design, automate and operate AWS infrastructure: CI/CD, Infrastructure as Code, a Kubernetes-based observability platform and edge security.',
     highlights: [
-      '[FILL: achievement with a measurable result, e.g. "Cut deploy time from X to Y by ..."]',
-      '[FILL: another achievement]',
-      '[FILL: another achievement]',
+      'Designed and maintained CI/CD pipelines with Azure DevOps Pipelines and Terraform to provision AWS infrastructure, cutting deployment time by ~47% and removing manual steps across multiple environments.',
+      'Built and operated an observability platform on AWS EKS (Grafana, Prometheus, Loki, Kafka, Alloy, Fluent Bit), improving incident detection time and monitoring coverage of critical systems.',
+      'Led the migration of the observability stack to another AWS region, rebuilding the EKS cluster and reducing downtime during failover scenarios.',
+      'Implemented AWS WAF from scratch, with custom rules to mitigate common web threats (OWASP Top 10).',
+      'Built Docker-based tooling, including Python sidecar containers for automation, log processing and custom metric collection.',
     ],
-    stack: ['[FILL: technology]', '[FILL: technology]'],
-  },
-  {
-    company: '[FILL: previous company]',
-    role: '[FILL: job title]',
-    period: '[FILL: period]',
-    location: '[FILL: location]',
-    description: '[FILL: context]',
-    highlights: ['[FILL: achievement]', '[FILL: achievement]'],
-    stack: ['[FILL: technology]'],
+    stack: [
+      'AWS',
+      'Terraform',
+      'Kubernetes (EKS)',
+      'Azure DevOps Pipelines',
+      'Docker',
+      'Grafana',
+      'Prometheus',
+      'Loki',
+      'Kafka',
+      'AWS WAF',
+      'Python',
+    ],
   },
 ];
 
 // Group by area; avoid huge lists and "skill level" bars
 export const skills: SkillGroup[] = [
-  { group: '[FILL: e.g. "Cloud"]', items: ['[FILL]', '[FILL]'] },
-  { group: '[FILL: e.g. "IaC & CI/CD"]', items: ['[FILL]', '[FILL]'] },
-  { group: '[FILL: e.g. "Containers & orchestration"]', items: ['[FILL]', '[FILL]'] },
-  { group: '[FILL: e.g. "Observability"]', items: ['[FILL]', '[FILL]'] },
+  { group: 'Cloud & IaC', items: ['AWS (EKS, WAF, multi-region)', 'Terraform'] },
+  { group: 'Containers & orchestration', items: ['Kubernetes', 'Docker', 'Helm'] },
+  { group: 'CI/CD', items: ['Azure DevOps Pipelines', 'GitHub Actions', 'Git'] },
+  {
+    group: 'Observability & security',
+    items: ['Grafana', 'Prometheus', 'Loki', 'Kafka', 'Fluent Bit', 'Alloy', 'AWS WAF'],
+  },
+  { group: 'Systems & programming', items: ['Linux', 'Shell scripting', 'Python', 'C#', 'SQL', 'JavaScript'] },
+  { group: 'Languages', items: ['Portuguese (native)', 'English (advanced)'] },
 ];
 
 export const education: Education[] = [
   {
-    institution: '[FILL: institution]',
-    degree: '[FILL: degree/program]',
-    period: '[FILL: period or graduation year]',
+    institution: 'PUC Minas',
+    degree: "Bachelor's in Information Systems",
+    period: 'Feb 2023 – Dec 2026',
+  },
+  {
+    institution: 'CEFET-MG',
+    degree: 'Technical Degree in Electrical Engineering (integrated high school)',
+    period: 'Feb 2019 – Dec 2022',
   },
 ];
 
 // Use [] to hide the section
 export const certifications: Certification[] = [
   {
-    name: '[FILL: certification name]',
-    issuer: '[FILL: issuer, e.g. "AWS"]',
-    year: '[FILL: year]',
-    url: '[FILL: verification link (Credly etc.) or remove this property]',
+    name: 'AWS Certified Cloud Practitioner',
+    issuer: 'Amazon Web Services',
+    year: '[FILL: year obtained]',
+    url: '[FILL: Credly verification link or remove this property]',
   },
 ];

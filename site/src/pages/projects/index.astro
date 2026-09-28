@@ -13,7 +13,7 @@ const projects = (await getCollection('projects', ({ data }) => !data.draft)).so
     <h1>Projects</h1>
   </header>
   <p class="lead">
-    [FILL: one sentence introducing the projects, e.g. "Case studies with context, decisions and results."]
+    Case studies from work and personal projects: the context, what I did and the results.
   </p>
   <div class="grid">
     {projects.map((project) => <ProjectCard project={project} />)}

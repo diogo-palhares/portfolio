@@ -43,8 +43,8 @@ const featured = (await getCollection('projects', ({ data }) => !data.draft && d
   <section class="callout">
     <h2>How this site works</h2>
     <p>
-      [FILL: 1-2 sentences inviting the reader to see the site's infrastructure, e.g. "This site is served by S3 +
-      CloudFront, provisioned with Terraform and shipped by GitHub Actions over OIDC."]
+      This site is served from a private S3 bucket through CloudFront, provisioned with Terraform and shipped by
+      GitHub Actions over OIDC, with no AWS keys stored anywhere.
     </p>
     <a href="/about-this-site/">See the architecture →</a>
   </section>
