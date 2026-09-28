@@ -50,10 +50,21 @@ provider "github" {
 
 data "aws_caller_identity" "current" {}
 
+# IDs numéricos do dono e do repositório: o GitHub emite o "sub" do token OIDC
+# no formato imutável repo:<dono>@<id>/<repo>@<id>:..., que não pode ser
+# reaproveitado por outro repositório criado com o mesmo nome.
+data "github_user" "owner" {
+  username = var.github_owner
+}
+
+data "github_repository" "this" {
+  full_name = "${var.github_owner}/${var.github_repo}"
+}
+
 locals {
   account_id   = data.aws_caller_identity.current.account_id
   name         = replace(var.domain_name, ".", "-")
-  repo         = "${var.github_owner}/${var.github_repo}"
+  repo         = "${var.github_owner}@${data.github_user.owner.id}/${var.github_repo}@${data.github_repository.this.repo_id}"
   state_bucket = "${local.name}-tfstate-${local.account_id}"
   # Mesmos padrões usados em infra/main
   site_bucket = "${local.name}-site-${local.account_id}"
