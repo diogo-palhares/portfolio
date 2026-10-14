@@ -109,5 +109,6 @@ export const certifications: Certification[] = [
     name: 'AWS Certified AI Practitioner',
     issuer: 'Amazon Web Services',
     year: '2026',
+    url: 'https://www.credly.com/earner/earned/badge/902a06e2-0b8f-4d06-860c-b8c8f4d02269',
   },
 ];
