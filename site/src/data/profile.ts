@@ -104,4 +104,10 @@ export const education: Education[] = [
 ];
 
 // Use [] to hide the section
-export const certifications: Certification[] = [];
+export const certifications: Certification[] = [
+  {
+    name: 'AWS Certified AI Practitioner',
+    issuer: 'Amazon Web Services',
+    year: '2026',
+  },
+];
